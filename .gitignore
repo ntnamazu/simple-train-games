@@ -8,8 +8,13 @@ Thumbs.db
 *.swp
 *.swo
 
-# Node (将来用)
+# Node
 node_modules/
+package-lock.json
+
+# Playwright
+test-results/
+playwright-report/
 
 # Docker
 .docker/

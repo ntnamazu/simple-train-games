@@ -676,12 +676,11 @@ function startPassengerGame() {
                 "passenger",
             ]);
 
-            // 顔
-            k.add([
+            // 顔（乗客に追従）
+            const face = k.add([
                 k.text("😊", { size: 24 }),
                 k.pos(x, y),
                 k.anchor("center"),
-                { parent: passenger },
                 "face",
             ]);
 
@@ -693,16 +692,17 @@ function startPassengerGame() {
                     passenger.pos,
                     k.vec2(WIDTH / 2, trainY),
                     0.3,
-                    (p) => passenger.pos = p,
+                    (p) => {
+                        passenger.pos = p;
+                        face.pos = p; // 顔も一緒に移動
+                    },
                     k.easings.easeOutQuad
                 );
 
                 // 乗客を消してスコア加算
                 k.wait(0.3, () => {
                     passenger.destroy();
-                    k.get("face").forEach(f => {
-                        if (f.parent === passenger) f.destroy();
-                    });
+                    face.destroy();
                     score++;
                     scoreText.text = `のせた: ${score}にん`;
 
