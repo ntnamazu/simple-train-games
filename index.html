@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>でんしゃミニゲーム</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/kaboom@3000.1.17/dist/kaboom.mjs" type="module"></script>
+</head>
+<body>
+    <div id="menu-screen">
+        <h1>🚃 でんしゃミニゲーム 🚃</h1>
+        <p class="subtitle">あそびたいゲームをえらんでね！</p>
+        <div class="game-buttons">
+            <button class="game-btn" onclick="startGame('stopping')">
+                <span class="game-icon">🛑</span>
+                <span class="game-name">ぴったりていしゃ</span>
+            </button>
+            <button class="game-btn" onclick="startGame('quiz')" disabled>
+                <span class="game-icon">❓</span>
+                <span class="game-name">ろせんカラークイズ</span>
+                <span class="coming-soon">じゅんびちゅう</span>
+            </button>
+            <button class="game-btn" onclick="startGame('passenger')" disabled>
+                <span class="game-icon">👥</span>
+                <span class="game-name">じょうきゃくをのせろ！</span>
+                <span class="coming-soon">じゅんびちゅう</span>
+            </button>
+            <button class="game-btn" onclick="startGame('puzzle')" disabled>
+                <span class="game-icon">🔀</span>
+                <span class="game-name">ろせんパズル</span>
+                <span class="coming-soon">じゅんびちゅう</span>
+            </button>
+        </div>
+    </div>
+    <canvas id="game-canvas"></canvas>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
