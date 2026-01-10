@@ -78,6 +78,92 @@ test.describe('でんしゃミニゲーム', () => {
     expect(errors).toHaveLength(0);
   });
 
+  test('ぴったりていしゃ - もどるボタンでメニューに戻れる', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    // ゲームを起動
+    await page.click('button:has-text("ぴったりていしゃ")');
+    await page.waitForTimeout(500);
+
+    // キャンバスがアクティブになっていることを確認
+    const canvas = page.locator('#game-canvas');
+    await expect(canvas).toHaveClass(/active/);
+
+    // goToMenu関数を直接呼び出してメニューに戻る
+    await page.evaluate(() => window.goToMenu());
+    await page.waitForTimeout(500);
+
+    // メニュー画面が表示されていることを確認
+    const menuScreen = page.locator('#menu-screen');
+    await expect(menuScreen).not.toHaveClass(/hidden/);
+
+    // キャンバスが非アクティブになっていることを確認
+    await expect(canvas).not.toHaveClass(/active/);
+
+    expect(errors).toHaveLength(0);
+  });
+
+  test('ろせんカラークイズ - もどるボタンでメニューに戻れる', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    await page.click('button:has-text("ろせんカラークイズ")');
+    await page.waitForTimeout(500);
+
+    const canvas = page.locator('#game-canvas');
+    await expect(canvas).toHaveClass(/active/);
+
+    await page.evaluate(() => window.goToMenu());
+    await page.waitForTimeout(500);
+
+    const menuScreen = page.locator('#menu-screen');
+    await expect(menuScreen).not.toHaveClass(/hidden/);
+    await expect(canvas).not.toHaveClass(/active/);
+
+    expect(errors).toHaveLength(0);
+  });
+
+  test('じょうきゃくをのせろ！ - もどるボタンでメニューに戻れる', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    await page.click('button:has-text("じょうきゃくをのせろ")');
+    await page.waitForTimeout(500);
+
+    const canvas = page.locator('#game-canvas');
+    await expect(canvas).toHaveClass(/active/);
+
+    await page.evaluate(() => window.goToMenu());
+    await page.waitForTimeout(500);
+
+    const menuScreen = page.locator('#menu-screen');
+    await expect(menuScreen).not.toHaveClass(/hidden/);
+    await expect(canvas).not.toHaveClass(/active/);
+
+    expect(errors).toHaveLength(0);
+  });
+
+  test('ろせんパズル - もどるボタンでメニューに戻れる', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    await page.click('button:has-text("ろせんパズル")');
+    await page.waitForTimeout(500);
+
+    const canvas = page.locator('#game-canvas');
+    await expect(canvas).toHaveClass(/active/);
+
+    await page.evaluate(() => window.goToMenu());
+    await page.waitForTimeout(500);
+
+    const menuScreen = page.locator('#menu-screen');
+    await expect(menuScreen).not.toHaveClass(/hidden/);
+    await expect(canvas).not.toHaveClass(/active/);
+
+    expect(errors).toHaveLength(0);
+  });
+
   test('全ゲームを順番に起動してエラーがないか確認', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
