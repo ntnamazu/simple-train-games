@@ -37,14 +37,18 @@ window.startGame = function(gameType) {
 };
 
 // メニューに戻る
-function goToMenu() {
+window.goToMenu = function() {
     if (k) {
-        k.destroy();
+        try {
+            k.quit();
+        } catch (e) {
+            // エラーを無視
+        }
         k = null;
     }
     document.getElementById('game-canvas').classList.remove('active');
     document.getElementById('menu-screen').classList.remove('hidden');
-}
+};
 
 // =====================================================
 // 🛑 ぴったり停車ゲーム
