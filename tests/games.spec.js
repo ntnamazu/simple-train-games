@@ -97,7 +97,8 @@ test.describe('でんしゃミニゲーム', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('ろせんパズル - エラーなく起動する', async ({ page }) => {
+  // ろせんパズルは「じゅんびちゅう」のため、一時的にスキップ
+  test.skip('ろせんパズル - エラーなく起動する', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
 
@@ -110,7 +111,7 @@ test.describe('でんしゃミニゲーム', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('ろせんパズル - せんろタイルをタップすると回転する', async ({ page }) => {
+  test.skip('ろせんパズル - せんろタイルをタップすると回転する', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
 
@@ -149,7 +150,7 @@ test.describe('でんしゃミニゲーム', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('ろせんパズル - 線路が繋がっていない状態でチェックすると失敗メッセージが出る', async ({ page }) => {
+  test.skip('ろせんパズル - 線路が繋がっていない状態でチェックすると失敗メッセージが出る', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
 
@@ -259,7 +260,7 @@ test.describe('でんしゃミニゲーム', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('ろせんパズル - もどるボタンでメニューに戻れる', async ({ page }) => {
+  test.skip('ろせんパズル - もどるボタンでメニューに戻れる', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
 
@@ -283,11 +284,12 @@ test.describe('でんしゃミニゲーム', () => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
 
+    // ろせんパズルは「じゅんびちゅう」のため除外
     const games = [
       'ぴったりていしゃ',
       'ろせんカラークイズ',
       'じょうきゃくをのせろ',
-      'ろせんパズル',
+      // 'ろせんパズル', // じゅんびちゅう
     ];
 
     for (const game of games) {
