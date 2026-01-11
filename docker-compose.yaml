@@ -1,8 +1,10 @@
 services:
   game:
-    build: .
+    image: nginx:alpine
     ports:
       - "8080:80"
+    volumes:
+      - .:/usr/share/nginx/html:ro
 
   test:
     image: mcr.microsoft.com/playwright:v1.40.0-jammy
