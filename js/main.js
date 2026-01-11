@@ -1,6 +1,9 @@
 // 🚃 でんしゃミニゲーム - メインスクリプト
 
-import kaboom from "https://unpkg.com/kaboom@3000.1.17/dist/kaboom.mjs";
+import kaplay from "https://unpkg.com/kaplay@3001/dist/kaplay.mjs";
+
+// 後方互換性のためのエイリアス
+const kaboom = kaplay;
 
 // 路線データ
 const TRAIN_LINES = {
