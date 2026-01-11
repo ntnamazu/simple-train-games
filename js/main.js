@@ -1013,9 +1013,145 @@ function startPuzzleGame() {
         ]);
 
         checkBtn.onClick(() => {
-            // 簡易クリア判定（実際は線路の接続をチェックすべきだが、簡略化）
-            k.go("clear");
+            // 線路の接続をチェック
+            if (checkConnection(tiles, level, gridRows, gridCols)) {
+                k.go("clear");
+            } else {
+                // 失敗メッセージを表示
+                showFailMessage();
+            }
         });
+
+        // 失敗メッセージを表示する関数
+        let failMessage = null;
+        function showFailMessage() {
+            // 既存のメッセージがあれば削除
+            if (failMessage) {
+                failMessage.forEach(obj => obj.destroy());
+            }
+            failMessage = [];
+
+            const bg = k.add([
+                k.rect(280, 80, { radius: 12 }),
+                k.pos(WIDTH / 2, HEIGHT / 2),
+                k.anchor("center"),
+                k.color(200, 80, 80),
+                k.opacity(0.9),
+            ]);
+            failMessage.push(bg);
+
+            const text = k.add([
+                k.text("❌ つながってないよ！", { size: 24 }),
+                k.pos(WIDTH / 2, HEIGHT / 2),
+                k.anchor("center"),
+                k.color(255, 255, 255),
+            ]);
+            failMessage.push(text);
+
+            // 2秒後にメッセージを消す
+            k.wait(2, () => {
+                if (failMessage) {
+                    failMessage.forEach(obj => obj.destroy());
+                    failMessage = null;
+                }
+            });
+        }
+
+        // 線路接続チェック関数
+        function checkConnection(tiles, level, rows, cols) {
+            // 各タイプの接続方向を定義（回転0度時）
+            // 方向: 0=上, 1=右, 2=下, 3=左
+            const trackConnections = {
+                1: [0, 2],       // 直線縦: 上下
+                2: [1, 3],       // 直線横: 左右
+                3: [1, 2],       // カーブ右下: 右と下
+                4: [2, 3],       // カーブ左下: 下と左
+                5: [0, 3],       // カーブ左上: 上と左
+                6: [0, 1],       // カーブ右上: 上と右
+                7: [1],          // スタート: 右へ出る
+                8: [3],          // ゴール: 左から入る
+            };
+
+            // 回転を考慮した接続方向を取得
+            function getConnections(tile) {
+                if (!tile) return [];
+                const baseConnections = trackConnections[tile.tileType] || [];
+                const rotationSteps = (tile.rotation / 90) % 4;
+                return baseConnections.map(dir => (dir + rotationSteps) % 4);
+            }
+
+            // 方向の反対を取得
+            function oppositeDir(dir) {
+                return (dir + 2) % 4;
+            }
+
+            // 方向に応じた隣接セルを取得
+            function getNeighbor(row, col, dir) {
+                const deltas = [
+                    [-1, 0],  // 上
+                    [0, 1],   // 右
+                    [1, 0],   // 下
+                    [0, -1],  // 左
+                ];
+                const [dr, dc] = deltas[dir];
+                return [row + dr, col + dc];
+            }
+
+            // スタート位置を見つける
+            let startRow = -1, startCol = -1;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (level.grid[r][c] === 7) {
+                        startRow = r;
+                        startCol = c;
+                        break;
+                    }
+                }
+                if (startRow >= 0) break;
+            }
+
+            if (startRow < 0) return false;
+
+            // BFSで経路探索
+            const visited = new Set();
+            const queue = [[startRow, startCol]];
+            visited.add(`${startRow},${startCol}`);
+
+            while (queue.length > 0) {
+                const [row, col] = queue.shift();
+                const tile = tiles[row]?.[col];
+                if (!tile) continue;
+
+                // ゴールに到達したらクリア
+                if (tile.tileType === 8) {
+                    return true;
+                }
+
+                const connections = getConnections(tile);
+
+                for (const dir of connections) {
+                    const [nRow, nCol] = getNeighbor(row, col, dir);
+
+                    // 範囲チェック
+                    if (nRow < 0 || nRow >= rows || nCol < 0 || nCol >= cols) continue;
+
+                    const key = `${nRow},${nCol}`;
+                    if (visited.has(key)) continue;
+
+                    const neighborTile = tiles[nRow]?.[nCol];
+                    if (!neighborTile) continue;
+
+                    // 隣接タイルが反対方向に接続しているかチェック
+                    const neighborConnections = getConnections(neighborTile);
+                    if (neighborConnections.includes(oppositeDir(dir))) {
+                        visited.add(key);
+                        queue.push([nRow, nCol]);
+                    }
+                }
+            }
+
+            return false;
+        }
 
         // 戻るボタン
         const backBtn = k.add([

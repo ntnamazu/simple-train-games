@@ -149,6 +149,50 @@ test.describe('でんしゃミニゲーム', () => {
     expect(errors).toHaveLength(0);
   });
 
+  test('ろせんパズル - 線路が繋がっていない状態でチェックすると失敗メッセージが出る', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    // パズルゲームを起動
+    await page.click('button:has-text("ろせんパズル")');
+    await page.waitForTimeout(1000);
+
+    const canvas = page.locator('#game-canvas');
+    await expect(canvas).toHaveClass(/active/);
+
+    // まず線路を回転させて繋がらない状態にする
+    const canvasBox = await canvas.boundingBox();
+    if (canvasBox) {
+      // 2番目のタイルを1回クリックして回転（横線が縦になり、繋がらなくなる）
+      const clickX = canvasBox.x + canvasBox.width * 0.44;
+      const clickY = canvasBox.y + canvasBox.height * 0.52;
+      await page.mouse.click(clickX, clickY);
+    }
+    await page.waitForTimeout(300);
+
+    // チェック前のスクリーンショットを取得
+    const beforeCheck = await canvas.screenshot();
+
+    // チェックボタンをクリック（画面下部中央）
+    if (canvasBox) {
+      const checkX = canvasBox.x + canvasBox.width * 0.5;
+      const checkY = canvasBox.y + canvasBox.height * 0.85;
+      await page.mouse.click(checkX, checkY);
+    }
+    await page.waitForTimeout(500);
+
+    // チェック後のスクリーンショットを取得
+    const afterCheck = await canvas.screenshot();
+
+    // 画面が変わっていること（失敗メッセージが表示された）を確認
+    // クリアシーンに遷移しないので、画面が変わっているはず（失敗表示）
+    const screenshotsAreDifferent = !beforeCheck.equals(afterCheck);
+    expect(screenshotsAreDifferent).toBe(true);
+
+    // エラーがないことを確認
+    expect(errors).toHaveLength(0);
+  });
+
   test('ぴったりていしゃ - もどるボタンでメニューに戻れる', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
