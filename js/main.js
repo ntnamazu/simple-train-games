@@ -957,8 +957,8 @@ function startPuzzleGame() {
 
                     tiles[row][col] = tile;
 
-                    // 線路を描画
-                    drawTrack(tile, tileType, cellSize, currentLine.color);
+                    // 線路を描画（トラックパーツを受け取る）
+                    const trackParts = drawTrack(tile, tileType, cellSize, currentLine.color);
 
                     // スタート・ゴールのラベル
                     if (tileType === 7) {
@@ -982,6 +982,13 @@ function startPuzzleGame() {
                         tile.onClick(() => {
                             tile.rotation = (tile.rotation + 90) % 360;
                             tile.angle = tile.rotation;
+                            // 線路パーツも一緒に回転
+                            trackParts.forEach(part => {
+                                part.angle = tile.rotation;
+                            });
+                            // タイルの色を少し変えて回転したことを視覚的に示す
+                            const brightness = 80 + (tile.rotation / 90) * 10;
+                            tile.color = k.rgb(brightness, brightness, 100 + (tile.rotation / 90) * 10);
                             moves++;
                             movesText.text = `タップ: ${moves}`;
                         });
@@ -1026,44 +1033,54 @@ function startPuzzleGame() {
         backBtn.onClick(() => goToMenu());
     });
 
-    // 線路を描画する関数
+    // 線路を描画する関数（タイルに紐づくトラックパーツを返す）
     function drawTrack(tile, type, size, color) {
         const x = tile.pos.x;
         const y = tile.pos.y;
         const trackWidth = 12;
         const halfSize = size / 2 - 8;
+        const trackParts = [];
 
         if (type === 1 || type === 7 || type === 8) {
             // 直線（縦）
-            k.add([
+            const track = k.add([
                 k.rect(trackWidth, size - 16),
                 k.pos(x, y),
                 k.anchor("center"),
                 k.color(...color),
+                k.rotate(0),
             ]);
+            trackParts.push(track);
         } else if (type === 2) {
             // 直線（横）
-            k.add([
+            const track = k.add([
                 k.rect(size - 16, trackWidth),
                 k.pos(x, y),
                 k.anchor("center"),
                 k.color(...color),
+                k.rotate(0),
             ]);
+            trackParts.push(track);
         } else if (type >= 3 && type <= 6) {
             // カーブ（簡易的に2本の線で表現）
-            k.add([
+            const track1 = k.add([
                 k.rect(halfSize, trackWidth),
                 k.pos(x + halfSize / 4, y),
                 k.anchor("center"),
                 k.color(...color),
+                k.rotate(0),
             ]);
-            k.add([
+            const track2 = k.add([
                 k.rect(trackWidth, halfSize),
                 k.pos(x, y + halfSize / 4),
                 k.anchor("center"),
                 k.color(...color),
+                k.rotate(0),
             ]);
+            trackParts.push(track1, track2);
         }
+
+        return trackParts;
     }
 
     // クリアシーン

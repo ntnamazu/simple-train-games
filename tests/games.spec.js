@@ -110,6 +110,45 @@ test.describe('でんしゃミニゲーム', () => {
     expect(errors).toHaveLength(0);
   });
 
+  test('ろせんパズル - せんろタイルをタップすると回転する', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    // パズルゲームを起動
+    await page.click('button:has-text("ろせんパズル")');
+    await page.waitForTimeout(1000);
+
+    const canvas = page.locator('#game-canvas');
+    await expect(canvas).toHaveClass(/active/);
+
+    // クリック前のスクリーンショットを取得（キャンバスの状態を保存）
+    const beforeScreenshot = await canvas.screenshot();
+
+    // グリッドのせんろタイルをクリック
+    // レベル1のグリッドは [7, 2, 2, 8] で、2番目の「2」（直線横）がクリック可能
+    // スクリーンショットを見ると、2番目のタイルは画面の約44%, 縦52%あたり
+    const canvasBox = await canvas.boundingBox();
+    if (canvasBox) {
+      // 2番目のタイル位置をクリック
+      const clickX = canvasBox.x + canvasBox.width * 0.44;
+      const clickY = canvasBox.y + canvasBox.height * 0.52;
+      await page.mouse.click(clickX, clickY);
+    }
+
+    await page.waitForTimeout(300);
+
+    // クリック後のスクリーンショットを取得
+    const afterScreenshot = await canvas.screenshot();
+
+    // スクリーンショットが異なること（=何か変化があったこと）を確認
+    // タイルが回転すれば画面が変わるはず
+    const screenshotsAreDifferent = !beforeScreenshot.equals(afterScreenshot);
+    expect(screenshotsAreDifferent).toBe(true);
+
+    // エラーがないことを確認
+    expect(errors).toHaveLength(0);
+  });
+
   test('ぴったりていしゃ - もどるボタンでメニューに戻れる', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
