@@ -958,34 +958,27 @@ function startPuzzleGame() {
                     tiles[row][col] = tile;
 
                     // 線路を描画（トラックパーツを受け取る）
-                    const trackParts = drawTrack(tile, tileType, cellSize, currentLine.color);
-
-                    // スタート・ゴールのラベル
-                    if (tileType === 7) {
-                        k.add([
-                            k.text("S", { size: 20 }),
-                            k.pos(x, y),
-                            k.anchor("center"),
-                            k.color(100, 255, 100),
-                        ]);
-                    } else if (tileType === 8) {
-                        k.add([
-                            k.text("G", { size: 20 }),
-                            k.pos(x, y),
-                            k.anchor("center"),
-                            k.color(255, 100, 100),
-                        ]);
-                    }
+                    let trackParts = drawTrack(tile, tileType, cellSize, currentLine.color);
 
                     // タップで回転（スタート・ゴール以外）
                     if (tileType !== 7 && tileType !== 8) {
                         tile.onClick(() => {
                             tile.rotation = (tile.rotation + 90) % 360;
-                            tile.angle = tile.rotation;
-                            // 線路パーツも一緒に回転
-                            trackParts.forEach(part => {
-                                part.angle = tile.rotation;
-                            });
+
+                            // 回転に応じて新しいタイルタイプを計算（カーブの場合）
+                            if (tileType >= 3 && tileType <= 6) {
+                                // カーブは回転で別のカーブタイプに変わる
+                                // 3→4→5→6→3... と循環
+                                const rotationSteps = tile.rotation / 90;
+                                tile.tileType = 3 + ((tileType - 3 + rotationSteps) % 4);
+                            }
+
+                            // 古い線路パーツを削除
+                            trackParts.forEach(part => part.destroy());
+
+                            // 新しい線路パーツを描画
+                            trackParts = drawTrack(tile, tile.tileType, cellSize, currentLine.color);
+
                             // タイルの色を少し変えて回転したことを視覚的に示す
                             const brightness = 80 + (tile.rotation / 90) * 10;
                             tile.color = k.rgb(brightness, brightness, 100 + (tile.rotation / 90) * 10);
@@ -1076,6 +1069,11 @@ function startPuzzleGame() {
             function getConnections(tile) {
                 if (!tile) return [];
                 const baseConnections = trackConnections[tile.tileType] || [];
+                // カーブ(type 3-6)は tileType 自体が回転で変わるので rotation は考慮しない
+                // 直線(type 1, 2)は rotation で向きが変わる
+                if (tile.tileType >= 3 && tile.tileType <= 6) {
+                    return baseConnections;
+                }
                 const rotationSteps = (tile.rotation / 90) % 4;
                 return baseConnections.map(dir => (dir + rotationSteps) % 4);
             }
@@ -1177,7 +1175,29 @@ function startPuzzleGame() {
         const halfSize = size / 2 - 8;
         const trackParts = [];
 
-        if (type === 1 || type === 7 || type === 8) {
+        if (type === 7) {
+            // スタート駅
+            drawStation(x, y, size, color, "しゅっぱつ");
+            // 右方向に線路を伸ばす
+            const track = k.add([
+                k.rect(size / 3, trackWidth),
+                k.pos(x + size / 3, y),
+                k.anchor("center"),
+                k.color(...color),
+            ]);
+            trackParts.push(track);
+        } else if (type === 8) {
+            // ゴール駅
+            drawStation(x, y, size, color, "とうちゃく");
+            // 左方向に線路を伸ばす
+            const track = k.add([
+                k.rect(size / 3, trackWidth),
+                k.pos(x - size / 3, y),
+                k.anchor("center"),
+                k.color(...color),
+            ]);
+            trackParts.push(track);
+        } else if (type === 1) {
             // 直線（縦）
             const track = k.add([
                 k.rect(trackWidth, size - 16),
@@ -1198,17 +1218,44 @@ function startPuzzleGame() {
             ]);
             trackParts.push(track);
         } else if (type >= 3 && type <= 6) {
-            // カーブ（簡易的に2本の線で表現）
+            // カーブ（タイプごとに正しい位置に描画）
+            // type 3: 右下（右と下に接続）
+            // type 4: 左下（下と左に接続）
+            // type 5: 左上（上と左に接続）
+            // type 6: 右上（上と右に接続）
+            const curveOffset = halfSize / 4;
+            let hOffset = 0, vOffset = 0;
+
+            if (type === 3) {
+                // 右下カーブ: 右に横線、下に縦線
+                hOffset = curveOffset;
+                vOffset = curveOffset;
+            } else if (type === 4) {
+                // 左下カーブ: 左に横線、下に縦線
+                hOffset = -curveOffset;
+                vOffset = curveOffset;
+            } else if (type === 5) {
+                // 左上カーブ: 左に横線、上に縦線
+                hOffset = -curveOffset;
+                vOffset = -curveOffset;
+            } else if (type === 6) {
+                // 右上カーブ: 右に横線、上に縦線
+                hOffset = curveOffset;
+                vOffset = -curveOffset;
+            }
+
+            // 横線
             const track1 = k.add([
                 k.rect(halfSize, trackWidth),
-                k.pos(x + halfSize / 4, y),
+                k.pos(x + hOffset, y),
                 k.anchor("center"),
                 k.color(...color),
                 k.rotate(0),
             ]);
+            // 縦線
             const track2 = k.add([
                 k.rect(trackWidth, halfSize),
-                k.pos(x, y + halfSize / 4),
+                k.pos(x, y + vOffset),
                 k.anchor("center"),
                 k.color(...color),
                 k.rotate(0),
@@ -1217,6 +1264,36 @@ function startPuzzleGame() {
         }
 
         return trackParts;
+    }
+
+    // 駅を描画する関数
+    function drawStation(x, y, size, color, label) {
+        const stationSize = size * 0.6;
+
+        // ホーム（灰色の四角）
+        k.add([
+            k.rect(stationSize, stationSize * 0.7, { radius: 4 }),
+            k.pos(x, y),
+            k.anchor("center"),
+            k.color(180, 180, 180),
+            k.outline(2, k.rgb(100, 100, 100)),
+        ]);
+
+        // 屋根（路線カラー）
+        k.add([
+            k.rect(stationSize * 0.8, stationSize * 0.25, { radius: 2 }),
+            k.pos(x, y - stationSize * 0.3),
+            k.anchor("center"),
+            k.color(...color),
+        ]);
+
+        // 駅名ラベル
+        k.add([
+            k.text(label, { size: Math.floor(size * 0.13) }),
+            k.pos(x, y + stationSize * 0.1),
+            k.anchor("center"),
+            k.color(50, 50, 50),
+        ]);
     }
 
     // クリアシーン
