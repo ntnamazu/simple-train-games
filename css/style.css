@@ -85,20 +85,11 @@ h1 {
     color: #333;
 }
 
-.coming-soon,
-.game-status {
+.coming-soon {
     font-size: 0.7rem;
     color: #999;
     position: absolute;
     bottom: 8px;
-}
-
-.game-status {
-    background: #ff9800;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 0.65rem;
 }
 
 /* ゲームキャンバス */
