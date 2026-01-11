@@ -52,6 +52,38 @@ test.describe('でんしゃミニゲーム', () => {
     expect(errors).toHaveLength(0);
   });
 
+  test('ろせんカラークイズ - 路線名をクリックすると正誤判定される', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    // クイズゲームを起動
+    await page.click('button:has-text("ろせんカラークイズ")');
+    await page.waitForTimeout(1000);
+
+    // キャンバスがアクティブになっていることを確認
+    const canvas = page.locator('#game-canvas');
+    await expect(canvas).toHaveClass(/active/);
+
+    // キャンバス内の選択肢ボタン（路線名）の位置をクリック
+    // 選択肢は画面の下半分にあるので、そこをクリックする
+    const canvasBox = await canvas.boundingBox();
+    if (canvasBox) {
+      // 最初の選択肢ボタンの位置をクリック（画面中央、縦方向55%あたり）
+      const clickX = canvasBox.x + canvasBox.width / 2;
+      const clickY = canvasBox.y + canvasBox.height * 0.55;
+      await page.mouse.click(clickX, clickY);
+    }
+
+    // クリック後、少し待つ
+    await page.waitForTimeout(500);
+
+    // エラーがないことを確認（isHoveringエラーが出ないこと）
+    if (errors.length > 0) {
+      console.log('Errors found:', errors);
+    }
+    expect(errors).toHaveLength(0);
+  });
+
   test('じょうきゃくをのせろ！ - エラーなく起動する', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
