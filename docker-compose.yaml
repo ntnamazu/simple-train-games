@@ -7,17 +7,13 @@ services:
       - .:/usr/share/nginx/html:ro
 
   test:
-    image: mcr.microsoft.com/playwright:v1.40.0-jammy
-    working_dir: /app
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     volumes:
-      - .:/app
+      - ./tests:/app/tests:ro
+      - ./playwright.config.js:/app/playwright.config.js:ro
     depends_on:
       - game
-    command: >
-      bash -c "
-        npm install &&
-        npx playwright install chromium &&
-        npx playwright test --reporter=list
-      "
     environment:
       - CI=true

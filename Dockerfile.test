@@ -1,0 +1,13 @@
+FROM mcr.microsoft.com/playwright:v1.40.0-jammy
+
+WORKDIR /app
+
+# package.jsonをコピーして依存関係をインストール
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Playwrightのブラウザをインストール
+RUN npx playwright install chromium
+
+# テスト実行コマンド
+CMD ["npx", "playwright", "test", "--reporter=list"]
