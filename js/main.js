@@ -426,6 +426,7 @@ function startQuizGame() {
         const btnStartY = HEIGHT * 0.55;
         const btnHeight = 60;
         const btnGap = 15;
+        let answered = false;
 
         choices.forEach((choiceKey, index) => {
             const line = TRAIN_LINES[choiceKey];
@@ -449,8 +450,9 @@ function startQuizGame() {
             ]);
 
             btn.onClick(() => {
-                // 全ボタン無効化
-                k.get("choiceBtn").forEach(b => b.unuse("area"));
+                // 既に回答済みなら何もしない
+                if (answered) return;
+                answered = true;
 
                 const isCorrect = choiceKey === correctKey;
 
