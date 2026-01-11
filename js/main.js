@@ -5,6 +5,103 @@ import kaplay from "https://unpkg.com/kaplay@3001/dist/kaplay.mjs";
 // 後方互換性のためのエイリアス
 const kaboom = kaplay;
 
+// =====================================================
+// 定数定義
+// =====================================================
+
+// タイルタイプ（ろせんパズル用）
+const TILE_TYPES = {
+    EMPTY: 0,
+    STRAIGHT_VERTICAL: 1,   // 直線（縦）
+    STRAIGHT_HORIZONTAL: 2, // 直線（横）
+    CURVE_BOTTOM_RIGHT: 3,  // カーブ（右下）
+    CURVE_BOTTOM_LEFT: 4,   // カーブ（左下）
+    CURVE_TOP_LEFT: 5,      // カーブ（左上）
+    CURVE_TOP_RIGHT: 6,     // カーブ（右上）
+    START: 7,               // スタート駅
+    GOAL: 8,                // ゴール駅
+};
+
+// 方向定数
+const DIRECTIONS = {
+    UP: 0,
+    RIGHT: 1,
+    DOWN: 2,
+    LEFT: 3,
+};
+
+// 色定数
+const COLORS = {
+    // 背景色
+    SKY_BLUE: [135, 206, 235],
+    STEEL_BLUE: [70, 130, 180],
+    CORNFLOWER_BLUE: [100, 149, 237],
+    DARK_GRAY: [60, 60, 80],
+
+    // UI色
+    WHITE: [255, 255, 255],
+    BLACK: [0, 0, 0],
+    GOLD: [255, 215, 0],
+    SUCCESS_GREEN: [80, 200, 120],
+    FAIL_RED: [200, 80, 80],
+    BUTTON_GRAY: [100, 100, 100],
+
+    // 電車・線路関連
+    WINDOW_BLUE: [200, 230, 255],
+    OUTLINE_DARK: [50, 50, 50],
+    GROUND_GRAY: [100, 100, 100],
+    RAIL_GRAY: [80, 80, 80],
+    PLATFORM_GRAY: [180, 180, 180],
+    TILE_BG: [40, 40, 50],
+    TILE_SURFACE: [80, 80, 100],
+};
+
+// フォントサイズ
+const FONT_SIZES = {
+    TITLE: 32,
+    LARGE: 28,
+    MEDIUM: 24,
+    SMALL: 20,
+    TINY: 18,
+};
+
+// ボタンサイズ
+const BUTTON_SIZES = {
+    BACK: { width: 80, height: 40, radius: 8 },
+    ACTION: { width: 150, height: 50, radius: 10 },
+    CHECK: { width: 160, height: 50, radius: 10 },
+    CHOICE: { width: 280, height: 60, radius: 12 },
+};
+
+// ゲーム設定
+const GAME_CONFIG = {
+    STOPPING: {
+        INITIAL_SPEED: 5,
+        SPEED_INCREMENT: 0.5,
+        MAX_SPEED: 12,
+        BRAKE_DECELERATION: 0.95,
+        SCORE_THRESHOLDS: [
+            { maxDiff: 10, points: 100 },
+            { maxDiff: 30, points: 70 },
+            { maxDiff: 60, points: 40 },
+            { maxDiff: 100, points: 20 },
+        ],
+    },
+    QUIZ: {
+        MAX_ROUNDS: 10,
+        POINTS_PER_CORRECT: 10,
+        NEXT_DELAY: 1.5,
+    },
+    PASSENGER: {
+        TIME_LIMIT: 30,
+        SPAWN_INTERVAL: 1,
+    },
+    PUZZLE: {
+        TRACK_WIDTH: 12,
+        FAIL_MESSAGE_DURATION: 2,
+    },
+};
+
 // 路線データ
 const TRAIN_LINES = {
     yamanote: { name: "山手線", color: [128, 194, 65] },      // 黄緑
@@ -75,7 +172,7 @@ function startStoppingGame() {
     const TRAIN_START_X = WIDTH + 200;
 
     let currentLine = getRandomLine();
-    let trainSpeed = 5;
+    let trainSpeed = GAME_CONFIG.STOPPING.INITIAL_SPEED;
     let score = 0;
     let round = 1;
     let isBraking = false;
@@ -88,8 +185,8 @@ function startStoppingGame() {
         gameState = "ready";
 
         // 速度は徐々に上がる
-        trainSpeed = 5 + (round - 1) * 0.5;
-        if (trainSpeed > 12) trainSpeed = 12;
+        trainSpeed = GAME_CONFIG.STOPPING.INITIAL_SPEED + (round - 1) * GAME_CONFIG.STOPPING.SPEED_INCREMENT;
+        if (trainSpeed > GAME_CONFIG.STOPPING.MAX_SPEED) trainSpeed = GAME_CONFIG.STOPPING.MAX_SPEED;
 
         // 背景 - 地面
         k.add([
@@ -241,7 +338,7 @@ function startStoppingGame() {
                 }
             } else if (gameState === "braking") {
                 // ブレーキ中は減速
-                trainSpeed *= 0.95;
+                trainSpeed *= GAME_CONFIG.STOPPING.BRAKE_DECELERATION;
                 train.pos.x -= trainSpeed;
 
                 if (trainSpeed < 0.1) {
@@ -250,17 +347,13 @@ function startStoppingGame() {
                     const trainFront = train.pos.x;
                     const diff = Math.abs(trainFront - STOP_LINE_X);
 
+                    // スコア計算
                     let points = 0;
-                    if (diff < 10) {
-                        points = 100;
-                    } else if (diff < 30) {
-                        points = 70;
-                    } else if (diff < 60) {
-                        points = 40;
-                    } else if (diff < 100) {
-                        points = 20;
-                    } else {
-                        points = 0;
+                    for (const threshold of GAME_CONFIG.STOPPING.SCORE_THRESHOLDS) {
+                        if (diff < threshold.maxDiff) {
+                            points = threshold.points;
+                            break;
+                        }
                     }
 
                     showResult(points);
@@ -360,7 +453,7 @@ function startQuizGame() {
 
     let score = 0;
     let round = 1;
-    const MAX_ROUNDS = 10;
+    const MAX_ROUNDS = GAME_CONFIG.QUIZ.MAX_ROUNDS;
 
     // シャッフル関数
     function shuffle(array) {
@@ -461,7 +554,7 @@ function startQuizGame() {
 
                 if (isCorrect) {
                     btn.color = k.rgb(100, 200, 100);
-                    score += 10;
+                    score += GAME_CONFIG.QUIZ.POINTS_PER_CORRECT;
                 } else {
                     btn.color = k.rgb(200, 100, 100);
                     // 正解を表示
@@ -481,7 +574,7 @@ function startQuizGame() {
                 ]);
 
                 // 次へ
-                k.wait(1.5, () => {
+                k.wait(GAME_CONFIG.QUIZ.NEXT_DELAY, () => {
                     if (round >= MAX_ROUNDS) {
                         k.go("result");
                     } else {
@@ -600,7 +693,7 @@ function startPassengerGame() {
     const HEIGHT = k.height();
 
     let score = 0;
-    let timeLeft = 30;
+    let timeLeft = GAME_CONFIG.PASSENGER.TIME_LIMIT;
     let gameOver = false;
     const currentLine = getRandomLine();
 
@@ -734,11 +827,11 @@ function startPassengerGame() {
         }
 
         // 定期的に乗客を生成
-        const spawnLoop = k.loop(1, spawnPassenger);
+        const spawnLoop = k.loop(GAME_CONFIG.PASSENGER.SPAWN_INTERVAL, spawnPassenger);
         spawnPassenger(); // 最初の1人
 
         // タイマー
-        const timerLoop = k.loop(1, () => {
+        const timerLoop = k.loop(GAME_CONFIG.PASSENGER.SPAWN_INTERVAL, () => {
             if (gameOver) return;
             timeLeft--;
             timeText.text = `のこり: ${timeLeft}びょう`;
@@ -964,16 +1057,15 @@ function startPuzzleGame() {
                     let trackParts = drawTrack(tile, tileType, cellSize, currentLine.color);
 
                     // タップで回転（スタート・ゴール以外）
-                    if (tileType !== 7 && tileType !== 8) {
+                    if (tileType !== TILE_TYPES.START && tileType !== TILE_TYPES.GOAL) {
                         tile.onClick(() => {
                             tile.rotation = (tile.rotation + 90) % 360;
 
                             // 回転に応じて新しいタイルタイプを計算（カーブの場合）
-                            if (tileType >= 3 && tileType <= 6) {
+                            if (tileType >= TILE_TYPES.CURVE_BOTTOM_RIGHT && tileType <= TILE_TYPES.CURVE_TOP_RIGHT) {
                                 // カーブは回転で別のカーブタイプに変わる
-                                // 3→4→5→6→3... と循環
                                 const rotationSteps = tile.rotation / 90;
-                                tile.tileType = 3 + ((tileType - 3 + rotationSteps) % 4);
+                                tile.tileType = TILE_TYPES.CURVE_BOTTOM_RIGHT + ((tileType - TILE_TYPES.CURVE_BOTTOM_RIGHT + rotationSteps) % 4);
                             }
 
                             // 古い線路パーツを削除
@@ -1056,25 +1148,24 @@ function startPuzzleGame() {
         // 線路接続チェック関数
         function checkConnection(tiles, level, rows, cols) {
             // 各タイプの接続方向を定義（回転0度時）
-            // 方向: 0=上, 1=右, 2=下, 3=左
             const trackConnections = {
-                1: [0, 2],       // 直線縦: 上下
-                2: [1, 3],       // 直線横: 左右
-                3: [1, 2],       // カーブ右下: 右と下
-                4: [2, 3],       // カーブ左下: 下と左
-                5: [0, 3],       // カーブ左上: 上と左
-                6: [0, 1],       // カーブ右上: 上と右
-                7: [1],          // スタート: 右へ出る
-                8: [3],          // ゴール: 左から入る
+                [TILE_TYPES.STRAIGHT_VERTICAL]: [DIRECTIONS.UP, DIRECTIONS.DOWN],
+                [TILE_TYPES.STRAIGHT_HORIZONTAL]: [DIRECTIONS.RIGHT, DIRECTIONS.LEFT],
+                [TILE_TYPES.CURVE_BOTTOM_RIGHT]: [DIRECTIONS.RIGHT, DIRECTIONS.DOWN],
+                [TILE_TYPES.CURVE_BOTTOM_LEFT]: [DIRECTIONS.DOWN, DIRECTIONS.LEFT],
+                [TILE_TYPES.CURVE_TOP_LEFT]: [DIRECTIONS.UP, DIRECTIONS.LEFT],
+                [TILE_TYPES.CURVE_TOP_RIGHT]: [DIRECTIONS.UP, DIRECTIONS.RIGHT],
+                [TILE_TYPES.START]: [DIRECTIONS.RIGHT],
+                [TILE_TYPES.GOAL]: [DIRECTIONS.LEFT],
             };
 
             // 回転を考慮した接続方向を取得
             function getConnections(tile) {
                 if (!tile) return [];
                 const baseConnections = trackConnections[tile.tileType] || [];
-                // カーブ(type 3-6)は tileType 自体が回転で変わるので rotation は考慮しない
-                // 直線(type 1, 2)は rotation で向きが変わる
-                if (tile.tileType >= 3 && tile.tileType <= 6) {
+                // カーブは tileType 自体が回転で変わるので rotation は考慮しない
+                // 直線は rotation で向きが変わる
+                if (tile.tileType >= TILE_TYPES.CURVE_BOTTOM_RIGHT && tile.tileType <= TILE_TYPES.CURVE_TOP_RIGHT) {
                     return baseConnections;
                 }
                 const rotationSteps = (tile.rotation / 90) % 4;
@@ -1102,7 +1193,7 @@ function startPuzzleGame() {
             let startRow = -1, startCol = -1;
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    if (level.grid[r][c] === 7) {
+                    if (level.grid[r][c] === TILE_TYPES.START) {
                         startRow = r;
                         startCol = c;
                         break;
@@ -1124,7 +1215,7 @@ function startPuzzleGame() {
                 if (!tile) continue;
 
                 // ゴールに到達したらクリア
-                if (tile.tileType === 8) {
+                if (tile.tileType === TILE_TYPES.GOAL) {
                     return true;
                 }
 
@@ -1174,11 +1265,11 @@ function startPuzzleGame() {
     function drawTrack(tile, type, size, color) {
         const x = tile.pos.x;
         const y = tile.pos.y;
-        const trackWidth = 12;
+        const trackWidth = GAME_CONFIG.PUZZLE.TRACK_WIDTH;
         const halfSize = size / 2 - 8;
         const trackParts = [];
 
-        if (type === 7) {
+        if (type === TILE_TYPES.START) {
             // スタート駅
             drawStation(x, y, size, color, "しゅっぱつ");
             // 右方向に線路を伸ばす
@@ -1189,7 +1280,7 @@ function startPuzzleGame() {
                 k.color(...color),
             ]);
             trackParts.push(track);
-        } else if (type === 8) {
+        } else if (type === TILE_TYPES.GOAL) {
             // ゴール駅
             drawStation(x, y, size, color, "とうちゃく");
             // 左方向に線路を伸ばす
@@ -1200,7 +1291,7 @@ function startPuzzleGame() {
                 k.color(...color),
             ]);
             trackParts.push(track);
-        } else if (type === 1) {
+        } else if (type === TILE_TYPES.STRAIGHT_VERTICAL) {
             // 直線（縦）
             const track = k.add([
                 k.rect(trackWidth, size - 16),
@@ -1210,7 +1301,7 @@ function startPuzzleGame() {
                 k.rotate(0),
             ]);
             trackParts.push(track);
-        } else if (type === 2) {
+        } else if (type === TILE_TYPES.STRAIGHT_HORIZONTAL) {
             // 直線（横）
             const track = k.add([
                 k.rect(size - 16, trackWidth),
@@ -1220,28 +1311,24 @@ function startPuzzleGame() {
                 k.rotate(0),
             ]);
             trackParts.push(track);
-        } else if (type >= 3 && type <= 6) {
+        } else if (type >= TILE_TYPES.CURVE_BOTTOM_RIGHT && type <= TILE_TYPES.CURVE_TOP_RIGHT) {
             // カーブ（タイプごとに正しい位置に描画）
-            // type 3: 右下（右と下に接続）
-            // type 4: 左下（下と左に接続）
-            // type 5: 左上（上と左に接続）
-            // type 6: 右上（上と右に接続）
             const curveOffset = halfSize / 4;
             let hOffset = 0, vOffset = 0;
 
-            if (type === 3) {
+            if (type === TILE_TYPES.CURVE_BOTTOM_RIGHT) {
                 // 右下カーブ: 右に横線、下に縦線
                 hOffset = curveOffset;
                 vOffset = curveOffset;
-            } else if (type === 4) {
+            } else if (type === TILE_TYPES.CURVE_BOTTOM_LEFT) {
                 // 左下カーブ: 左に横線、下に縦線
                 hOffset = -curveOffset;
                 vOffset = curveOffset;
-            } else if (type === 5) {
+            } else if (type === TILE_TYPES.CURVE_TOP_LEFT) {
                 // 左上カーブ: 左に横線、上に縦線
                 hOffset = -curveOffset;
                 vOffset = -curveOffset;
-            } else if (type === 6) {
+            } else if (type === TILE_TYPES.CURVE_TOP_RIGHT) {
                 // 右上カーブ: 右に横線、上に縦線
                 hOffset = curveOffset;
                 vOffset = -curveOffset;
