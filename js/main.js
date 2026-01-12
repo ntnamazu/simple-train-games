@@ -170,6 +170,110 @@ window.goToMenu = function() {
 };
 
 // =====================================================
+// 共通UIコンポーネント
+// =====================================================
+
+/**
+ * 戻るボタンを作成
+ * @param {number} x - ボタンのX座標
+ * @param {number} y - ボタンのY座標
+ * @returns {object} - ボタンオブジェクト
+ */
+function createBackButton(x, y) {
+    const btn = k.add([
+        k.rect(BUTTON_SIZES.BACK.width, BUTTON_SIZES.BACK.height, {
+            radius: BUTTON_SIZES.BACK.radius
+        }),
+        k.pos(x, y),
+        k.color(...COLORS.BUTTON_GRAY),
+        k.area(),
+    ]);
+    k.add([
+        k.text("もどる", { size: FONT_SIZES.TINY }),
+        k.pos(x + BUTTON_SIZES.BACK.width / 2, y + BUTTON_SIZES.BACK.height / 2),
+        k.anchor("center"),
+        k.color(...COLORS.WHITE),
+    ]);
+    btn.onClick(() => window.goToMenu());
+    return btn;
+}
+
+/**
+ * 結果画面のオーバーレイを作成
+ * @param {number} width - オーバーレイの幅（デフォルト320）
+ * @param {number} height - オーバーレイの高さ（デフォルト250）
+ * @returns {object} - オーバーレイオブジェクト
+ */
+function createResultOverlay(width = 320, height = 250) {
+    return k.add([
+        k.rect(width, height, { radius: 20 }),
+        k.pos(k.width() / 2, k.height() / 2),
+        k.anchor("center"),
+        k.color(...COLORS.BLACK),
+        k.opacity(0.85),
+    ]);
+}
+
+/**
+ * 電車を描画
+ * @param {number} x - 電車のX座標
+ * @param {number} y - 電車のY座標
+ * @param {number[]} color - 電車の色 [R, G, B]
+ * @param {object} options - オプション設定
+ * @returns {object} - 電車オブジェクト（本体と窓の配列）
+ */
+function createTrain(x, y, color, options = {}) {
+    const {
+        width = 180,
+        height = 70,
+        windowCount = 3,
+        windowWidth = 30,
+        windowHeight = 25,
+        windowGap = 50,
+        anchor = null,
+        tag = "train",
+        hasArea = false,
+    } = options;
+
+    const trainComponents = [];
+    const anchorComp = anchor ? [k.anchor(anchor)] : [];
+    const areaComp = hasArea ? [k.area()] : [];
+
+    // 電車本体
+    const train = k.add([
+        k.rect(width, height, { radius: 10 }),
+        k.pos(x, y),
+        k.color(...color),
+        k.outline(4, k.rgb(...COLORS.OUTLINE_DARK)),
+        ...anchorComp,
+        ...areaComp,
+        tag,
+    ]);
+    trainComponents.push(train);
+
+    // 電車の窓
+    const windowStartX = anchor === "center"
+        ? x - (windowCount - 1) * windowGap / 2
+        : x + 20;
+    const windowY = anchor === "center" ? y - 10 : y + 10;
+
+    for (let i = 0; i < windowCount; i++) {
+        const windowX = windowStartX + i * windowGap;
+        const win = k.add([
+            k.rect(windowWidth, windowHeight),
+            k.pos(windowX, windowY),
+            k.color(...COLORS.WINDOW_BLUE),
+            k.outline(2, k.rgb(...COLORS.OUTLINE_DARK)),
+            ...(anchor === "center" ? [k.anchor("center")] : []),
+            "window",
+        ]);
+        trainComponents.push(win);
+    }
+
+    return { train, windows: trainComponents.slice(1), all: trainComponents };
+}
+
+// =====================================================
 // 🛑 ぴったり停車ゲーム
 // =====================================================
 function startStoppingGame() {
@@ -305,23 +409,7 @@ function startStoppingGame() {
         ]);
 
         // 戻るボタン
-        const backBtn = k.add([
-            k.rect(80, 40, { radius: 8 }),
-            k.pos(WIDTH - 100, HEIGHT - 60),
-            k.color(100, 100, 100),
-            k.area(),
-            "backBtn",
-        ]);
-        k.add([
-            k.text("もどる", { size: 18 }),
-            k.pos(WIDTH - 60, HEIGHT - 48),
-            k.anchor("center"),
-            k.color(255, 255, 255),
-        ]);
-
-        backBtn.onClick(() => {
-            goToMenu();
-        });
+        createBackButton(WIDTH - 100, HEIGHT - 60);
 
         // ゲーム開始（タップで開始）
         k.onClick(() => {
@@ -510,24 +598,15 @@ function startQuizGame() {
 
         // 電車を表示
         const trainY = HEIGHT * 0.35;
-        k.add([
-            k.rect(220, 90, { radius: 12 }),
-            k.pos(WIDTH / 2, trainY),
-            k.anchor("center"),
-            k.color(...correctLine.color),
-            k.outline(4, k.rgb(50, 50, 50)),
-        ]);
-
-        // 電車の窓
-        for (let i = 0; i < 4; i++) {
-            k.add([
-                k.rect(35, 30),
-                k.pos(WIDTH / 2 - 75 + i * 50, trainY - 10),
-                k.anchor("center"),
-                k.color(200, 230, 255),
-                k.outline(2, k.rgb(50, 50, 50)),
-            ]);
-        }
+        createTrain(WIDTH / 2, trainY, correctLine.color, {
+            width: 220,
+            height: 90,
+            windowCount: 4,
+            windowWidth: 35,
+            windowHeight: 30,
+            windowGap: 50,
+            anchor: "center",
+        });
 
         // 選択肢ボタン
         const btnStartY = HEIGHT * 0.55;
@@ -597,30 +676,12 @@ function startQuizGame() {
         });
 
         // 戻るボタン
-        const backBtn = k.add([
-            k.rect(80, 40, { radius: 8 }),
-            k.pos(WIDTH - 100, HEIGHT - 60),
-            k.color(100, 100, 100),
-            k.area(),
-        ]);
-        k.add([
-            k.text("もどる", { size: 18 }),
-            k.pos(WIDTH - 60, HEIGHT - 48),
-            k.anchor("center"),
-            k.color(255, 255, 255),
-        ]);
-        backBtn.onClick(() => goToMenu());
+        createBackButton(WIDTH - 100, HEIGHT - 60);
     });
 
     // 結果シーン
     k.scene("result", () => {
-        k.add([
-            k.rect(320, 250, { radius: 20 }),
-            k.pos(WIDTH / 2, HEIGHT / 2),
-            k.anchor("center"),
-            k.color(0, 0, 0),
-            k.opacity(0.85),
-        ]);
+        createResultOverlay();
 
         k.add([
             k.text("けっか", { size: 36 }),
@@ -670,19 +731,7 @@ function startQuizGame() {
         });
 
         // 戻るボタン
-        const backBtn = k.add([
-            k.rect(80, 40, { radius: 8 }),
-            k.pos(WIDTH - 100, HEIGHT - 60),
-            k.color(100, 100, 100),
-            k.area(),
-        ]);
-        k.add([
-            k.text("もどる", { size: 18 }),
-            k.pos(WIDTH - 60, HEIGHT - 48),
-            k.anchor("center"),
-            k.color(255, 255, 255),
-        ]);
-        backBtn.onClick(() => goToMenu());
+        createBackButton(WIDTH - 100, HEIGHT - 60);
     });
 
     k.go("quiz");
@@ -715,26 +764,16 @@ function startPassengerGame() {
 
         // 電車（画面下部）
         const trainY = HEIGHT - 100;
-        const train = k.add([
-            k.rect(200, 80, { radius: 10 }),
-            k.pos(WIDTH / 2, trainY),
-            k.anchor("center"),
-            k.color(...currentLine.color),
-            k.outline(4, k.rgb(50, 50, 50)),
-            k.area(),
-            "train",
-        ]);
-
-        // 電車の窓
-        for (let i = 0; i < 3; i++) {
-            k.add([
-                k.rect(40, 30),
-                k.pos(WIDTH / 2 - 60 + i * 60, trainY - 10),
-                k.anchor("center"),
-                k.color(200, 230, 255),
-                k.outline(2, k.rgb(50, 50, 50)),
-            ]);
-        }
+        createTrain(WIDTH / 2, trainY, currentLine.color, {
+            width: 200,
+            height: 80,
+            windowCount: 3,
+            windowWidth: 40,
+            windowHeight: 30,
+            windowGap: 60,
+            anchor: "center",
+            hasArea: true,
+        });
 
         // 電車のドア（乗客が入る場所）
         k.add([
@@ -849,30 +888,12 @@ function startPassengerGame() {
         });
 
         // 戻るボタン
-        const backBtn = k.add([
-            k.rect(80, 40, { radius: 8 }),
-            k.pos(WIDTH - 100, HEIGHT - 40),
-            k.color(100, 100, 100),
-            k.area(),
-        ]);
-        k.add([
-            k.text("もどる", { size: 18 }),
-            k.pos(WIDTH - 60, HEIGHT - 28),
-            k.anchor("center"),
-            k.color(255, 255, 255),
-        ]);
-        backBtn.onClick(() => goToMenu());
+        createBackButton(WIDTH - 100, HEIGHT - 40);
     });
 
     // 結果シーン
     k.scene("result", () => {
-        k.add([
-            k.rect(320, 250, { radius: 20 }),
-            k.pos(WIDTH / 2, HEIGHT / 2),
-            k.anchor("center"),
-            k.color(0, 0, 0),
-            k.opacity(0.85),
-        ]);
+        createResultOverlay();
 
         k.add([
             k.text("しゅうりょう！", { size: 32 }),
@@ -922,19 +943,7 @@ function startPassengerGame() {
         });
 
         // 戻るボタン
-        const backBtn = k.add([
-            k.rect(80, 40, { radius: 8 }),
-            k.pos(WIDTH - 100, HEIGHT - 60),
-            k.color(100, 100, 100),
-            k.area(),
-        ]);
-        k.add([
-            k.text("もどる", { size: 18 }),
-            k.pos(WIDTH - 60, HEIGHT - 48),
-            k.anchor("center"),
-            k.color(255, 255, 255),
-        ]);
-        backBtn.onClick(() => goToMenu());
+        createBackButton(WIDTH - 100, HEIGHT - 60);
     });
 
     k.go("game");
@@ -1247,19 +1256,7 @@ function startPuzzleGame() {
         }
 
         // 戻るボタン
-        const backBtn = k.add([
-            k.rect(80, 40, { radius: 8 }),
-            k.pos(WIDTH - 100, HEIGHT - 40),
-            k.color(100, 100, 100),
-            k.area(),
-        ]);
-        k.add([
-            k.text("もどる", { size: 18 }),
-            k.pos(WIDTH - 60, HEIGHT - 28),
-            k.anchor("center"),
-            k.color(255, 255, 255),
-        ]);
-        backBtn.onClick(() => goToMenu());
+        createBackButton(WIDTH - 100, HEIGHT - 40);
     });
 
     // 線路を描画する関数（タイルに紐づくトラックパーツを返す）
@@ -1389,13 +1386,7 @@ function startPuzzleGame() {
 
     // クリアシーン
     k.scene("clear", () => {
-        k.add([
-            k.rect(320, 250, { radius: 20 }),
-            k.pos(WIDTH / 2, HEIGHT / 2),
-            k.anchor("center"),
-            k.color(0, 0, 0),
-            k.opacity(0.85),
-        ]);
+        createResultOverlay();
 
         k.add([
             k.text("🎉 クリア！", { size: 40 }),
@@ -1432,19 +1423,7 @@ function startPuzzleGame() {
         });
 
         // 戻るボタン
-        const backBtn = k.add([
-            k.rect(80, 40, { radius: 8 }),
-            k.pos(WIDTH - 100, HEIGHT - 60),
-            k.color(100, 100, 100),
-            k.area(),
-        ]);
-        k.add([
-            k.text("もどる", { size: 18 }),
-            k.pos(WIDTH - 60, HEIGHT - 48),
-            k.anchor("center"),
-            k.color(255, 255, 255),
-        ]);
-        backBtn.onClick(() => goToMenu());
+        createBackButton(WIDTH - 100, HEIGHT - 60);
     });
 
     k.go("puzzle");
