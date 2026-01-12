@@ -211,7 +211,14 @@ export function startPuzzleGame() {
             });
         }
 
-        // 線路接続チェック関数
+        /**
+         * 線路の接続状態をチェックする（BFSで経路探索）
+         * @param {Array} tiles - タイルの2次元配列
+         * @param {Object} level - レベルデータ
+         * @param {number} rows - 行数
+         * @param {number} cols - 列数
+         * @returns {boolean} スタートからゴールまで繋がっていればtrue
+         */
         function isPathConnected(tiles, level, rows, cols) {
             // 各タイプの接続方向を定義（回転0度時）
             const trackConnections = {
@@ -315,7 +322,14 @@ export function startPuzzleGame() {
         createBackButton(WIDTH - 100, HEIGHT - 40);
     });
 
-    // 線路を描画する関数（タイルに紐づくトラックパーツを返す）
+    /**
+     * 線路を描画する
+     * @param {Object} tile - タイルオブジェクト
+     * @param {number} type - タイルタイプ（TILE_TYPES定数）
+     * @param {number} size - セルサイズ
+     * @param {number[]} color - 路線カラー [R, G, B]
+     * @returns {Array} 描画された線路パーツの配列
+     */
     function drawTrack(tile, type, size, color) {
         const x = tile.pos.x;
         const y = tile.pos.y;
@@ -410,7 +424,14 @@ export function startPuzzleGame() {
         return trackParts;
     }
 
-    // 駅を描画する関数
+    /**
+     * 駅を描画する
+     * @param {number} x - X座標
+     * @param {number} y - Y座標
+     * @param {number} size - セルサイズ
+     * @param {number[]} color - 路線カラー [R, G, B]
+     * @param {string} label - 駅名ラベル（"しゅっぱつ" / "とうちゃく"）
+     */
     function drawStation(x, y, size, color, label) {
         const stationSize = size * 0.6;
 

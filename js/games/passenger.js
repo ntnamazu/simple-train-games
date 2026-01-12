@@ -75,7 +75,10 @@ export function startPassengerGame() {
             game.color(255, 255, 255),
         ]);
 
-        // 乗客を生成
+        /**
+         * 乗客を生成してランダムな位置に配置する
+         * クリックすると電車に向かって移動しスコア加算
+         */
         function createPassenger() {
             if (gameOver || !getGame()) return;
 

@@ -1,6 +1,17 @@
-// 🚃 でんしゃミニゲーム - 定数定義
+/**
+ * 🚃 でんしゃミニゲーム - 定数定義
+ *
+ * ゲーム全体で使用する定数を一箇所に集約
+ * - TILE_TYPES: パズルゲームのタイル種類
+ * - DIRECTIONS: 方向（上下左右）
+ * - COLORS: UI・背景・電車の色
+ * - FONT_SIZES: フォントサイズ
+ * - BUTTON_SIZES: ボタンサイズ
+ * - GAME_CONFIG: 各ゲームの設定値
+ * - TRAIN_LINES: 路線データ
+ */
 
-// タイルタイプ（ろせんパズル用）
+/** タイルタイプ（ろせんパズル用） */
 export const TILE_TYPES = {
     EMPTY: 0,
     STRAIGHT_VERTICAL: 1,   // 直線（縦）
@@ -13,7 +24,7 @@ export const TILE_TYPES = {
     GOAL: 8,                // ゴール駅
 };
 
-// 方向定数
+/** 方向定数（経路探索で使用） */
 export const DIRECTIONS = {
     UP: 0,
     RIGHT: 1,
@@ -21,7 +32,7 @@ export const DIRECTIONS = {
     LEFT: 3,
 };
 
-// 色定数
+/** 色定数（RGB配列形式） */
 export const COLORS = {
     // 背景色
     SKY_BLUE: [135, 206, 235],
@@ -47,7 +58,7 @@ export const COLORS = {
     TILE_SURFACE: [80, 80, 100],
 };
 
-// フォントサイズ
+/** フォントサイズ（ピクセル） */
 export const FONT_SIZES = {
     TITLE: 32,
     LARGE: 28,
@@ -56,7 +67,7 @@ export const FONT_SIZES = {
     TINY: 18,
 };
 
-// ボタンサイズ
+/** ボタンサイズ（width, height, radius） */
 export const BUTTON_SIZES = {
     BACK: { width: 80, height: 40, radius: 8 },
     ACTION: { width: 150, height: 50, radius: 10 },
@@ -64,7 +75,7 @@ export const BUTTON_SIZES = {
     CHOICE: { width: 280, height: 60, radius: 12 },
 };
 
-// ゲーム設定
+/** 各ゲームの設定値 */
 export const GAME_CONFIG = {
     STOPPING: {
         INITIAL_SPEED: 5,
@@ -93,7 +104,7 @@ export const GAME_CONFIG = {
     },
 };
 
-// 路線データ
+/** 路線データ（名前とRGBカラー） */
 export const TRAIN_LINES = {
     yamanote: { name: "山手線", color: [128, 194, 65] },      // 黄緑
     keihinTohoku: { name: "京浜東北線", color: [0, 178, 229] }, // 水色

@@ -197,6 +197,10 @@ export function startStoppingGame() {
             }
         });
 
+        /**
+         * ラウンド結果を表示する
+         * @param {number} points - 獲得ポイント（負の値は失敗時）
+         */
         function showRoundResult(points) {
             gameState = "result";
             score += points;

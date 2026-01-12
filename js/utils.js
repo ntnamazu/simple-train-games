@@ -45,7 +45,7 @@ export function cleanupKaplay() {
         try {
             game.destroyAll();
         } catch (e) {
-            // エラーを無視
+            console.warn('KaPlay クリーンアップ警告:', e.message);
         }
     }
 }
