@@ -61,3 +61,8 @@ npx playwright test -g "テスト名"
 ### Test Environment
 - ローカル: `playwright.config.js` が自動でPython HTTPサーバーを起動
 - CI: `docker-compose.yaml` でgameサービスに接続（`CI=true`環境変数で判定）
+
+### デバッグの手順
+
+- まずは不具合を再現するテストコードを作ること
+- そしてその次に、そのテストをクリアするように本体のコードを修正すること
