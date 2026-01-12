@@ -120,6 +120,25 @@ function getRandomLine() {
 // グローバル変数
 let k = null;
 
+// KaPlayインスタンスを初期化または再利用する
+function initKaplay(backgroundColor) {
+    if (k) {
+        // 既存のインスタンスがある場合は、全てのオブジェクトを削除して再利用
+        k.destroyAll();
+        k.setBackground(...backgroundColor);
+    } else {
+        // 初回のみ新しいインスタンスを作成
+        k = kaboom({
+            canvas: document.getElementById('game-canvas'),
+            width: window.innerWidth,
+            height: window.innerHeight,
+            background: backgroundColor,
+            touchToMouse: true,
+        });
+    }
+    return k;
+}
+
 // ゲーム開始関数（HTMLから呼ばれる）
 window.startGame = function(gameType) {
     document.getElementById('menu-screen').classList.add('hidden');
@@ -139,12 +158,12 @@ window.startGame = function(gameType) {
 // メニューに戻る
 window.goToMenu = function() {
     if (k) {
+        // インスタンスは破棄せず、オブジェクトだけ削除
         try {
-            k.quit();
+            k.destroyAll();
         } catch (e) {
             // エラーを無視
         }
-        k = null;
     }
     document.getElementById('game-canvas').classList.remove('active');
     document.getElementById('menu-screen').classList.remove('hidden');
@@ -154,14 +173,8 @@ window.goToMenu = function() {
 // 🛑 ぴったり停車ゲーム
 // =====================================================
 function startStoppingGame() {
-    // Kaboom初期化
-    k = kaboom({
-        canvas: document.getElementById('game-canvas'),
-        width: window.innerWidth,
-        height: window.innerHeight,
-        background: [135, 206, 235], // 空色
-        touchToMouse: true,
-    });
+    // KaPlay初期化（再利用）
+    initKaplay(COLORS.SKY_BLUE);
 
     const WIDTH = k.width();
     const HEIGHT = k.height();
@@ -323,6 +336,9 @@ function startStoppingGame() {
 
         // 毎フレーム更新
         k.onUpdate(() => {
+            // ゲームが終了している場合は何もしない
+            if (!k) return;
+
             // 窓を電車に追従させる
             k.get("window").forEach((w, i) => {
                 w.pos.x = train.pos.x + 20 + i * 50;
@@ -440,13 +456,8 @@ function startStoppingGame() {
 // ❓ 路線カラークイズ
 // =====================================================
 function startQuizGame() {
-    k = kaboom({
-        canvas: document.getElementById('game-canvas'),
-        width: window.innerWidth,
-        height: window.innerHeight,
-        background: [70, 130, 180], // スチールブルー
-        touchToMouse: true,
-    });
+    // KaPlay初期化（再利用）
+    initKaplay(COLORS.STEEL_BLUE);
 
     const WIDTH = k.width();
     const HEIGHT = k.height();
@@ -681,13 +692,8 @@ function startQuizGame() {
 // 👥 乗客乗せろゲーム
 // =====================================================
 function startPassengerGame() {
-    k = kaboom({
-        canvas: document.getElementById('game-canvas'),
-        width: window.innerWidth,
-        height: window.innerHeight,
-        background: [100, 149, 237], // コーンフラワーブルー
-        touchToMouse: true,
-    });
+    // KaPlay初期化（再利用）
+    initKaplay(COLORS.CORNFLOWER_BLUE);
 
     const WIDTH = k.width();
     const HEIGHT = k.height();
@@ -764,7 +770,7 @@ function startPassengerGame() {
 
         // 乗客を生成
         function spawnPassenger() {
-            if (gameOver) return;
+            if (gameOver || !k) return;
 
             const x = k.rand(80, WIDTH - 80);
             const y = k.rand(150, HEIGHT - 250);
@@ -832,7 +838,7 @@ function startPassengerGame() {
 
         // タイマー
         const timerLoop = k.loop(GAME_CONFIG.PASSENGER.SPAWN_INTERVAL, () => {
-            if (gameOver) return;
+            if (gameOver || !k) return;
             timeLeft--;
             timeText.text = `のこり: ${timeLeft}びょう`;
 
@@ -938,13 +944,8 @@ function startPassengerGame() {
 // 🔀 路線パズル
 // =====================================================
 function startPuzzleGame() {
-    k = kaboom({
-        canvas: document.getElementById('game-canvas'),
-        width: window.innerWidth,
-        height: window.innerHeight,
-        background: [60, 60, 80],
-        touchToMouse: true,
-    });
+    // KaPlay初期化（再利用）
+    initKaplay(COLORS.DARK_GRAY);
 
     const WIDTH = k.width();
     const HEIGHT = k.height();

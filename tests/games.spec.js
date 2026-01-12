@@ -311,4 +311,56 @@ test.describe('でんしゃミニゲーム', () => {
     expect(errors).toHaveLength(0);
   });
 
+  test('ゲームからメニューに戻って別のゲームを起動してもエラーが出ない', async ({ page }) => {
+    const errors = [];
+    const warnings = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (msg) => {
+      if (msg.type() === 'warning' || msg.text().includes('already initialized')) {
+        warnings.push(msg.text());
+      }
+    });
+
+    // ぴったりていしゃを起動
+    await page.click('button:has-text("ぴったりていしゃ")');
+    await page.waitForTimeout(500);
+
+    const canvas = page.locator('#game-canvas');
+    await expect(canvas).toHaveClass(/active/);
+
+    // メニューに戻る
+    await page.evaluate(() => window.goToMenu());
+    await page.waitForTimeout(500);
+
+    // メニュー画面が表示されていることを確認
+    const menuScreen = page.locator('#menu-screen');
+    await expect(menuScreen).not.toHaveClass(/hidden/);
+
+    // 少し待ってエラーが発生しないか確認
+    await page.waitForTimeout(500);
+
+    // 別のゲーム（ろせんカラークイズ）を起動
+    await page.click('button:has-text("ろせんカラークイズ")');
+    await page.waitForTimeout(1000);
+
+    // キャンバスがアクティブになっていることを確認
+    await expect(canvas).toHaveClass(/active/);
+
+    // メニュー画面が非表示になっていることを確認
+    await expect(menuScreen).toHaveClass(/hidden/);
+
+    // エラーがないことを確認
+    if (errors.length > 0) {
+      console.log('Errors found:', errors);
+    }
+    expect(errors).toHaveLength(0);
+
+    // KaPlayの再初期化警告がないことを確認
+    const kaplayWarnings = warnings.filter(w => w.includes('already initialized'));
+    if (kaplayWarnings.length > 0) {
+      console.log('KaPlay warnings found:', kaplayWarnings);
+    }
+    expect(kaplayWarnings).toHaveLength(0);
+  });
+
 });
