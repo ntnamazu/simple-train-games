@@ -1,7 +1,7 @@
 // ❓ 路線カラークイズ
 
 import { COLORS, GAME_CONFIG, TRAIN_LINES } from '../constants.js';
-import { initKaplay, getK, shuffle } from '../utils.js';
+import { initKaplay, getGame, shuffle } from '../utils.js';
 import { createBackButton, createResultOverlay, createTrain } from '../components.js';
 
 /**
@@ -10,16 +10,16 @@ import { createBackButton, createResultOverlay, createTrain } from '../component
 export function startQuizGame() {
     // KaPlay初期化（再利用）
     initKaplay(COLORS.STEEL_BLUE);
-    const k = getK();
+    const game = getGame();
 
-    const WIDTH = k.width();
-    const HEIGHT = k.height();
+    const WIDTH = game.width();
+    const HEIGHT = game.height();
 
     let score = 0;
     let round = 1;
     const MAX_ROUNDS = GAME_CONFIG.QUIZ.MAX_ROUNDS;
 
-    k.scene("quiz", () => {
+    game.scene("quiz", () => {
         // 正解の路線を選ぶ
         const lineKeys = Object.keys(TRAIN_LINES);
         const correctKey = lineKeys[Math.floor(Math.random() * lineKeys.length)];
@@ -31,24 +31,24 @@ export function startQuizGame() {
         const choices = shuffle([correctKey, ...shuffledOthers]);
 
         // タイトル
-        k.add([
-            k.text("この電車は なにせん？", { size: 32 }),
-            k.pos(WIDTH / 2, 40),
-            k.anchor("center"),
-            k.color(255, 255, 255),
+        game.add([
+            game.text("この電車は なにせん？", { size: 32 }),
+            game.pos(WIDTH / 2, 40),
+            game.anchor("center"),
+            game.color(255, 255, 255),
         ]);
 
         // スコア・ラウンド表示
-        k.add([
-            k.text(`スコア: ${score}`, { size: 24 }),
-            k.pos(20, 30),
-            k.color(255, 255, 255),
+        game.add([
+            game.text(`スコア: ${score}`, { size: 24 }),
+            game.pos(20, 30),
+            game.color(255, 255, 255),
         ]);
-        k.add([
-            k.text(`${round}/${MAX_ROUNDS}`, { size: 24 }),
-            k.pos(WIDTH - 20, 30),
-            k.anchor("topright"),
-            k.color(255, 255, 255),
+        game.add([
+            game.text(`${round}/${MAX_ROUNDS}`, { size: 24 }),
+            game.pos(WIDTH - 20, 30),
+            game.anchor("topright"),
+            game.color(255, 255, 255),
         ]);
 
         // 電車を表示
@@ -73,21 +73,21 @@ export function startQuizGame() {
             const line = TRAIN_LINES[choiceKey];
             const btnY = btnStartY + index * (btnHeight + btnGap);
 
-            const btn = k.add([
-                k.rect(280, btnHeight, { radius: 12 }),
-                k.pos(WIDTH / 2, btnY),
-                k.anchor("center"),
-                k.color(255, 255, 255),
-                k.area(),
+            const btn = game.add([
+                game.rect(280, btnHeight, { radius: 12 }),
+                game.pos(WIDTH / 2, btnY),
+                game.anchor("center"),
+                game.color(255, 255, 255),
+                game.area(),
                 "choiceBtn",
                 { lineKey: choiceKey },
             ]);
 
-            k.add([
-                k.text(line.name, { size: 26 }),
-                k.pos(WIDTH / 2, btnY),
-                k.anchor("center"),
-                k.color(50, 50, 50),
+            game.add([
+                game.text(line.name, { size: 26 }),
+                game.pos(WIDTH / 2, btnY),
+                game.anchor("center"),
+                game.color(50, 50, 50),
             ]);
 
             btn.onClick(() => {
@@ -98,33 +98,33 @@ export function startQuizGame() {
                 const isCorrect = choiceKey === correctKey;
 
                 if (isCorrect) {
-                    btn.color = k.rgb(100, 200, 100);
+                    btn.color = game.rgb(100, 200, 100);
                     score += GAME_CONFIG.QUIZ.POINTS_PER_CORRECT;
                 } else {
-                    btn.color = k.rgb(200, 100, 100);
+                    btn.color = game.rgb(200, 100, 100);
                     // 正解を表示
-                    k.get("choiceBtn").forEach(b => {
-                        if (b.lineKey === correctKey) {
-                            b.color = k.rgb(100, 200, 100);
+                    game.get("choiceBtn").forEach(button => {
+                        if (button.lineKey === correctKey) {
+                            button.color = game.rgb(100, 200, 100);
                         }
                     });
                 }
 
                 // 結果表示
-                k.add([
-                    k.text(isCorrect ? "⭕ せいかい！" : "❌ ざんねん！", { size: 36 }),
-                    k.pos(WIDTH / 2, HEIGHT * 0.9),
-                    k.anchor("center"),
-                    k.color(isCorrect ? [100, 255, 100] : [255, 100, 100]),
+                game.add([
+                    game.text(isCorrect ? "⭕ せいかい！" : "❌ ざんねん！", { size: 36 }),
+                    game.pos(WIDTH / 2, HEIGHT * 0.9),
+                    game.anchor("center"),
+                    game.color(isCorrect ? [100, 255, 100] : [255, 100, 100]),
                 ]);
 
                 // 次へ
-                k.wait(GAME_CONFIG.QUIZ.NEXT_DELAY, () => {
+                game.wait(GAME_CONFIG.QUIZ.NEXT_DELAY, () => {
                     if (round >= MAX_ROUNDS) {
-                        k.go("result");
+                        game.go("result");
                     } else {
                         round++;
-                        k.go("quiz");
+                        game.go("quiz");
                     }
                 });
             });
@@ -135,21 +135,21 @@ export function startQuizGame() {
     });
 
     // 結果シーン
-    k.scene("result", () => {
+    game.scene("result", () => {
         createResultOverlay();
 
-        k.add([
-            k.text("けっか", { size: 36 }),
-            k.pos(WIDTH / 2, HEIGHT / 2 - 80),
-            k.anchor("center"),
-            k.color(255, 255, 255),
+        game.add([
+            game.text("けっか", { size: 36 }),
+            game.pos(WIDTH / 2, HEIGHT / 2 - 80),
+            game.anchor("center"),
+            game.color(255, 255, 255),
         ]);
 
-        k.add([
-            k.text(`${score} てん`, { size: 48 }),
-            k.pos(WIDTH / 2, HEIGHT / 2 - 20),
-            k.anchor("center"),
-            k.color(255, 215, 0),
+        game.add([
+            game.text(`${score} てん`, { size: 48 }),
+            game.pos(WIDTH / 2, HEIGHT / 2 - 20),
+            game.anchor("center"),
+            game.color(255, 215, 0),
         ]);
 
         let message = "";
@@ -158,36 +158,36 @@ export function startQuizGame() {
         else if (score >= 50) message = "👍 いいね！";
         else message = "💪 がんばろう！";
 
-        k.add([
-            k.text(message, { size: 28 }),
-            k.pos(WIDTH / 2, HEIGHT / 2 + 30),
-            k.anchor("center"),
-            k.color(255, 255, 255),
+        game.add([
+            game.text(message, { size: 28 }),
+            game.pos(WIDTH / 2, HEIGHT / 2 + 30),
+            game.anchor("center"),
+            game.color(255, 255, 255),
         ]);
 
         // もう一度ボタン
-        const retryBtn = k.add([
-            k.rect(150, 50, { radius: 10 }),
-            k.pos(WIDTH / 2, HEIGHT / 2 + 90),
-            k.anchor("center"),
-            k.color(80, 200, 120),
-            k.area(),
+        const retryBtn = game.add([
+            game.rect(150, 50, { radius: 10 }),
+            game.pos(WIDTH / 2, HEIGHT / 2 + 90),
+            game.anchor("center"),
+            game.color(80, 200, 120),
+            game.area(),
         ]);
-        k.add([
-            k.text("もういちど", { size: 22 }),
-            k.pos(WIDTH / 2, HEIGHT / 2 + 90),
-            k.anchor("center"),
-            k.color(255, 255, 255),
+        game.add([
+            game.text("もういちど", { size: 22 }),
+            game.pos(WIDTH / 2, HEIGHT / 2 + 90),
+            game.anchor("center"),
+            game.color(255, 255, 255),
         ]);
         retryBtn.onClick(() => {
             score = 0;
             round = 1;
-            k.go("quiz");
+            game.go("quiz");
         });
 
         // 戻るボタン
         createBackButton(WIDTH - 100, HEIGHT - 60);
     });
 
-    k.go("quiz");
+    game.go("quiz");
 }

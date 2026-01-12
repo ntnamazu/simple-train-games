@@ -3,18 +3,15 @@
 import kaplay from "https://unpkg.com/kaplay@3001/dist/kaplay.mjs";
 import { TRAIN_LINES } from './constants.js';
 
-// 後方互換性のためのエイリアス
-const kaboom = kaplay;
-
 // グローバル変数（KaPlayインスタンス）
-let k = null;
+let game = null;
 
 /**
  * KaPlayインスタンスを取得
  * @returns {object} - KaPlayインスタンス
  */
-export function getK() {
-    return k;
+export function getGame() {
+    return game;
 }
 
 /**
@@ -23,13 +20,13 @@ export function getK() {
  * @returns {object} - KaPlayインスタンス
  */
 export function initKaplay(backgroundColor) {
-    if (k) {
+    if (game) {
         // 既存のインスタンスがある場合は、全てのオブジェクトを削除して再利用
-        k.destroyAll();
-        k.setBackground(...backgroundColor);
+        game.destroyAll();
+        game.setBackground(...backgroundColor);
     } else {
         // 初回のみ新しいインスタンスを作成
-        k = kaboom({
+        game = kaplay({
             canvas: document.getElementById('game-canvas'),
             width: window.innerWidth,
             height: window.innerHeight,
@@ -37,16 +34,16 @@ export function initKaplay(backgroundColor) {
             touchToMouse: true,
         });
     }
-    return k;
+    return game;
 }
 
 /**
  * KaPlayインスタンスをクリーンアップ（メニューに戻る時用）
  */
 export function cleanupKaplay() {
-    if (k) {
+    if (game) {
         try {
-            k.destroyAll();
+            game.destroyAll();
         } catch (e) {
             // エラーを無視
         }

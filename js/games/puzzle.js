@@ -1,7 +1,7 @@
 // 🔀 路線パズル
 
 import { COLORS, GAME_CONFIG, TILE_TYPES, DIRECTIONS } from '../constants.js';
-import { initKaplay, getK, getRandomLine } from '../utils.js';
+import { initKaplay, getGame, getRandomLine } from '../utils.js';
 import { createBackButton, createResultOverlay } from '../components.js';
 
 /**
@@ -10,10 +10,10 @@ import { createBackButton, createResultOverlay } from '../components.js';
 export function startPuzzleGame() {
     // KaPlay初期化（再利用）
     initKaplay(COLORS.DARK_GRAY);
-    const k = getK();
+    const game = getGame();
 
-    const WIDTH = k.width();
-    const HEIGHT = k.height();
+    const WIDTH = game.width();
+    const HEIGHT = game.height();
 
     let currentLevel = 1;
     let moves = 0;
@@ -53,7 +53,7 @@ export function startPuzzleGame() {
 
     const currentLine = getRandomLine();
 
-    k.scene("puzzle", () => {
+    game.scene("puzzle", () => {
         const level = levels[(currentLevel - 1) % levels.length];
         const gridRows = level.grid.length;
         const gridCols = level.grid[0].length;
@@ -66,26 +66,26 @@ export function startPuzzleGame() {
         moves = 0;
 
         // タイトル
-        k.add([
-            k.text(`レベル ${currentLevel}`, { size: 32 }),
-            k.pos(WIDTH / 2, 40),
-            k.anchor("center"),
-            k.color(255, 255, 255),
+        game.add([
+            game.text(`レベル ${currentLevel}`, { size: 32 }),
+            game.pos(WIDTH / 2, 40),
+            game.anchor("center"),
+            game.color(255, 255, 255),
         ]);
 
         // 移動回数
-        const movesText = k.add([
-            k.text(`タップ: ${moves}`, { size: 24 }),
-            k.pos(20, 30),
-            k.color(255, 255, 255),
+        const movesText = game.add([
+            game.text(`タップ: ${moves}`, { size: 24 }),
+            game.pos(20, 30),
+            game.color(255, 255, 255),
         ]);
 
         // 説明
-        k.add([
-            k.text("せんろをタップしてまわそう！", { size: 20 }),
-            k.pos(WIDTH / 2, 80),
-            k.anchor("center"),
-            k.color(200, 200, 200),
+        game.add([
+            game.text("せんろをタップしてまわそう！", { size: 20 }),
+            game.pos(WIDTH / 2, 80),
+            game.anchor("center"),
+            game.color(200, 200, 200),
         ]);
 
         // グリッドを描画
@@ -99,20 +99,20 @@ export function startPuzzleGame() {
                 const y = startY + row * cellSize + cellSize / 2;
 
                 // 背景タイル
-                k.add([
-                    k.rect(cellSize - 4, cellSize - 4, { radius: 4 }),
-                    k.pos(x, y),
-                    k.anchor("center"),
-                    k.color(40, 40, 50),
+                game.add([
+                    game.rect(cellSize - 4, cellSize - 4, { radius: 4 }),
+                    game.pos(x, y),
+                    game.anchor("center"),
+                    game.color(40, 40, 50),
                 ]);
 
                 if (tileType > 0) {
-                    const tile = k.add([
-                        k.rect(cellSize - 8, cellSize - 8, { radius: 4 }),
-                        k.pos(x, y),
-                        k.anchor("center"),
-                        k.color(80, 80, 100),
-                        k.area(),
+                    const tile = game.add([
+                        game.rect(cellSize - 8, cellSize - 8, { radius: 4 }),
+                        game.pos(x, y),
+                        game.anchor("center"),
+                        game.color(80, 80, 100),
+                        game.area(),
                         { tileType, row, col, rotation: 0 },
                         "tile",
                     ]);
@@ -142,7 +142,7 @@ export function startPuzzleGame() {
 
                             // タイルの色を少し変えて回転したことを視覚的に示す
                             const brightness = 80 + (tile.rotation / 90) * 10;
-                            tile.color = k.rgb(brightness, brightness, 100 + (tile.rotation / 90) * 10);
+                            tile.color = game.rgb(brightness, brightness, 100 + (tile.rotation / 90) * 10);
                             moves++;
                             movesText.text = `タップ: ${moves}`;
                         });
@@ -152,24 +152,24 @@ export function startPuzzleGame() {
         }
 
         // クリアチェックボタン
-        const checkBtn = k.add([
-            k.rect(160, 50, { radius: 10 }),
-            k.pos(WIDTH / 2, HEIGHT - 100),
-            k.anchor("center"),
-            k.color(80, 180, 80),
-            k.area(),
+        const checkBtn = game.add([
+            game.rect(160, 50, { radius: 10 }),
+            game.pos(WIDTH / 2, HEIGHT - 100),
+            game.anchor("center"),
+            game.color(80, 180, 80),
+            game.area(),
         ]);
-        k.add([
-            k.text("チェック！", { size: 24 }),
-            k.pos(WIDTH / 2, HEIGHT - 100),
-            k.anchor("center"),
-            k.color(255, 255, 255),
+        game.add([
+            game.text("チェック！", { size: 24 }),
+            game.pos(WIDTH / 2, HEIGHT - 100),
+            game.anchor("center"),
+            game.color(255, 255, 255),
         ]);
 
         checkBtn.onClick(() => {
             // 線路の接続をチェック
-            if (checkConnection(tiles, level, gridRows, gridCols)) {
-                k.go("clear");
+            if (isPathConnected(tiles, level, gridRows, gridCols)) {
+                game.go("clear");
             } else {
                 // 失敗メッセージを表示
                 showFailMessage();
@@ -185,25 +185,25 @@ export function startPuzzleGame() {
             }
             failMessage = [];
 
-            const bg = k.add([
-                k.rect(280, 80, { radius: 12 }),
-                k.pos(WIDTH / 2, HEIGHT / 2),
-                k.anchor("center"),
-                k.color(200, 80, 80),
-                k.opacity(0.9),
+            const bg = game.add([
+                game.rect(280, 80, { radius: 12 }),
+                game.pos(WIDTH / 2, HEIGHT / 2),
+                game.anchor("center"),
+                game.color(200, 80, 80),
+                game.opacity(0.9),
             ]);
             failMessage.push(bg);
 
-            const text = k.add([
-                k.text("❌ つながってないよ！", { size: 24 }),
-                k.pos(WIDTH / 2, HEIGHT / 2),
-                k.anchor("center"),
-                k.color(255, 255, 255),
+            const text = game.add([
+                game.text("❌ つながってないよ！", { size: 24 }),
+                game.pos(WIDTH / 2, HEIGHT / 2),
+                game.anchor("center"),
+                game.color(255, 255, 255),
             ]);
             failMessage.push(text);
 
             // 2秒後にメッセージを消す
-            k.wait(2, () => {
+            game.wait(2, () => {
                 if (failMessage) {
                     failMessage.forEach(obj => obj.destroy());
                     failMessage = null;
@@ -212,7 +212,7 @@ export function startPuzzleGame() {
         }
 
         // 線路接続チェック関数
-        function checkConnection(tiles, level, rows, cols) {
+        function isPathConnected(tiles, level, rows, cols) {
             // 各タイプの接続方向を定義（回転0度時）
             const trackConnections = {
                 [TILE_TYPES.STRAIGHT_VERTICAL]: [DIRECTIONS.UP, DIRECTIONS.DOWN],
@@ -239,29 +239,29 @@ export function startPuzzleGame() {
             }
 
             // 方向の反対を取得
-            function oppositeDir(dir) {
+            function getOppositeDirection(dir) {
                 return (dir + 2) % 4;
             }
 
             // 方向に応じた隣接セルを取得
-            function getNeighbor(row, col, dir) {
+            function getAdjacentCell(row, col, dir) {
                 const deltas = [
                     [-1, 0],  // 上
                     [0, 1],   // 右
                     [1, 0],   // 下
                     [0, -1],  // 左
                 ];
-                const [dr, dc] = deltas[dir];
-                return [row + dr, col + dc];
+                const [deltaRow, deltaCol] = deltas[dir];
+                return [row + deltaRow, col + deltaCol];
             }
 
             // スタート位置を見つける
             let startRow = -1, startCol = -1;
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    if (level.grid[r][c] === TILE_TYPES.START) {
-                        startRow = r;
-                        startCol = c;
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    if (level.grid[row][col] === TILE_TYPES.START) {
+                        startRow = row;
+                        startCol = col;
                         break;
                     }
                 }
@@ -288,22 +288,22 @@ export function startPuzzleGame() {
                 const connections = getConnections(tile);
 
                 for (const dir of connections) {
-                    const [nRow, nCol] = getNeighbor(row, col, dir);
+                    const [neighborRow, neighborCol] = getAdjacentCell(row, col, dir);
 
                     // 範囲チェック
-                    if (nRow < 0 || nRow >= rows || nCol < 0 || nCol >= cols) continue;
+                    if (neighborRow < 0 || neighborRow >= rows || neighborCol < 0 || neighborCol >= cols) continue;
 
-                    const key = `${nRow},${nCol}`;
+                    const key = `${neighborRow},${neighborCol}`;
                     if (visited.has(key)) continue;
 
-                    const neighborTile = tiles[nRow]?.[nCol];
+                    const neighborTile = tiles[neighborRow]?.[neighborCol];
                     if (!neighborTile) continue;
 
                     // 隣接タイルが反対方向に接続しているかチェック
                     const neighborConnections = getConnections(neighborTile);
-                    if (neighborConnections.includes(oppositeDir(dir))) {
+                    if (neighborConnections.includes(getOppositeDirection(dir))) {
                         visited.add(key);
-                        queue.push([nRow, nCol]);
+                        queue.push([neighborRow, neighborCol]);
                     }
                 }
             }
@@ -327,42 +327,42 @@ export function startPuzzleGame() {
             // スタート駅
             drawStation(x, y, size, color, "しゅっぱつ");
             // 右方向に線路を伸ばす
-            const track = k.add([
-                k.rect(size / 3, trackWidth),
-                k.pos(x + size / 3, y),
-                k.anchor("center"),
-                k.color(...color),
+            const track = game.add([
+                game.rect(size / 3, trackWidth),
+                game.pos(x + size / 3, y),
+                game.anchor("center"),
+                game.color(...color),
             ]);
             trackParts.push(track);
         } else if (type === TILE_TYPES.GOAL) {
             // ゴール駅
             drawStation(x, y, size, color, "とうちゃく");
             // 左方向に線路を伸ばす
-            const track = k.add([
-                k.rect(size / 3, trackWidth),
-                k.pos(x - size / 3, y),
-                k.anchor("center"),
-                k.color(...color),
+            const track = game.add([
+                game.rect(size / 3, trackWidth),
+                game.pos(x - size / 3, y),
+                game.anchor("center"),
+                game.color(...color),
             ]);
             trackParts.push(track);
         } else if (type === TILE_TYPES.STRAIGHT_VERTICAL) {
             // 直線（縦）
-            const track = k.add([
-                k.rect(trackWidth, size - 16),
-                k.pos(x, y),
-                k.anchor("center"),
-                k.color(...color),
-                k.rotate(0),
+            const track = game.add([
+                game.rect(trackWidth, size - 16),
+                game.pos(x, y),
+                game.anchor("center"),
+                game.color(...color),
+                game.rotate(0),
             ]);
             trackParts.push(track);
         } else if (type === TILE_TYPES.STRAIGHT_HORIZONTAL) {
             // 直線（横）
-            const track = k.add([
-                k.rect(size - 16, trackWidth),
-                k.pos(x, y),
-                k.anchor("center"),
-                k.color(...color),
-                k.rotate(0),
+            const track = game.add([
+                game.rect(size - 16, trackWidth),
+                game.pos(x, y),
+                game.anchor("center"),
+                game.color(...color),
+                game.rotate(0),
             ]);
             trackParts.push(track);
         } else if (type >= TILE_TYPES.CURVE_BOTTOM_RIGHT && type <= TILE_TYPES.CURVE_TOP_RIGHT) {
@@ -389,20 +389,20 @@ export function startPuzzleGame() {
             }
 
             // 横線
-            const track1 = k.add([
-                k.rect(halfSize, trackWidth),
-                k.pos(x + hOffset, y),
-                k.anchor("center"),
-                k.color(...color),
-                k.rotate(0),
+            const track1 = game.add([
+                game.rect(halfSize, trackWidth),
+                game.pos(x + hOffset, y),
+                game.anchor("center"),
+                game.color(...color),
+                game.rotate(0),
             ]);
             // 縦線
-            const track2 = k.add([
-                k.rect(trackWidth, halfSize),
-                k.pos(x, y + vOffset),
-                k.anchor("center"),
-                k.color(...color),
-                k.rotate(0),
+            const track2 = game.add([
+                game.rect(trackWidth, halfSize),
+                game.pos(x, y + vOffset),
+                game.anchor("center"),
+                game.color(...color),
+                game.rotate(0),
             ]);
             trackParts.push(track1, track2);
         }
@@ -415,72 +415,72 @@ export function startPuzzleGame() {
         const stationSize = size * 0.6;
 
         // ホーム（灰色の四角）
-        k.add([
-            k.rect(stationSize, stationSize * 0.7, { radius: 4 }),
-            k.pos(x, y),
-            k.anchor("center"),
-            k.color(180, 180, 180),
-            k.outline(2, k.rgb(100, 100, 100)),
+        game.add([
+            game.rect(stationSize, stationSize * 0.7, { radius: 4 }),
+            game.pos(x, y),
+            game.anchor("center"),
+            game.color(180, 180, 180),
+            game.outline(2, game.rgb(100, 100, 100)),
         ]);
 
         // 屋根（路線カラー）
-        k.add([
-            k.rect(stationSize * 0.8, stationSize * 0.25, { radius: 2 }),
-            k.pos(x, y - stationSize * 0.3),
-            k.anchor("center"),
-            k.color(...color),
+        game.add([
+            game.rect(stationSize * 0.8, stationSize * 0.25, { radius: 2 }),
+            game.pos(x, y - stationSize * 0.3),
+            game.anchor("center"),
+            game.color(...color),
         ]);
 
         // 駅名ラベル
-        k.add([
-            k.text(label, { size: Math.floor(size * 0.13) }),
-            k.pos(x, y + stationSize * 0.1),
-            k.anchor("center"),
-            k.color(50, 50, 50),
+        game.add([
+            game.text(label, { size: Math.floor(size * 0.13) }),
+            game.pos(x, y + stationSize * 0.1),
+            game.anchor("center"),
+            game.color(50, 50, 50),
         ]);
     }
 
     // クリアシーン
-    k.scene("clear", () => {
+    game.scene("clear", () => {
         createResultOverlay();
 
-        k.add([
-            k.text("🎉 クリア！", { size: 40 }),
-            k.pos(WIDTH / 2, HEIGHT / 2 - 60),
-            k.anchor("center"),
-            k.color(255, 215, 0),
+        game.add([
+            game.text("🎉 クリア！", { size: 40 }),
+            game.pos(WIDTH / 2, HEIGHT / 2 - 60),
+            game.anchor("center"),
+            game.color(255, 215, 0),
         ]);
 
-        k.add([
-            k.text(`${moves}タップでクリア！`, { size: 28 }),
-            k.pos(WIDTH / 2, HEIGHT / 2),
-            k.anchor("center"),
-            k.color(255, 255, 255),
+        game.add([
+            game.text(`${moves}タップでクリア！`, { size: 28 }),
+            game.pos(WIDTH / 2, HEIGHT / 2),
+            game.anchor("center"),
+            game.color(255, 255, 255),
         ]);
 
         // 次のレベルボタン
-        const nextBtn = k.add([
-            k.rect(150, 50, { radius: 10 }),
-            k.pos(WIDTH / 2, HEIGHT / 2 + 70),
-            k.anchor("center"),
-            k.color(80, 200, 120),
-            k.area(),
+        const nextBtn = game.add([
+            game.rect(150, 50, { radius: 10 }),
+            game.pos(WIDTH / 2, HEIGHT / 2 + 70),
+            game.anchor("center"),
+            game.color(80, 200, 120),
+            game.area(),
         ]);
-        k.add([
-            k.text("つぎへ", { size: 24 }),
-            k.pos(WIDTH / 2, HEIGHT / 2 + 70),
-            k.anchor("center"),
-            k.color(255, 255, 255),
+        game.add([
+            game.text("つぎへ", { size: 24 }),
+            game.pos(WIDTH / 2, HEIGHT / 2 + 70),
+            game.anchor("center"),
+            game.color(255, 255, 255),
         ]);
         nextBtn.onClick(() => {
             currentLevel++;
             if (currentLevel > levels.length) currentLevel = 1;
-            k.go("puzzle");
+            game.go("puzzle");
         });
 
         // 戻るボタン
         createBackButton(WIDTH - 100, HEIGHT - 60);
     });
 
-    k.go("puzzle");
+    game.go("puzzle");
 }
